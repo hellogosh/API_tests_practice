@@ -1,0 +1,29 @@
+
+# Python специфичные файлы
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Виртуальное окружение
+venv/
+env/
+.venv/
+
+# Логи
+*.log
+
+# Файлы покрытия тестов и кеши pytest/coverage
+htmlcov/
+.coverage
+.coverage.*
+.cache
+.pytest_cache/
+
+# IDE файлы (PyCharm, VSCode)
+.idea/
+.vscode/
+
+# Конфигурационные файлы и временные файлы редакторов
+*.sublime-workspace
+*.sublime-project
+*.iml
