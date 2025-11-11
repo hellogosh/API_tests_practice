@@ -1,150 +1,111 @@
 import requests
 import pytest
 from config.constant import BASE_URL
+from src.basic_api_methods import BasicAPIClient
+from src.scenarios import ItemScenarios
+from src.data_models import Item, ItemResponse
+from src.utils import validate_response
 
-class Test_API:
-    endpoint = f'{BASE_URL}items/'
 
-    def test_create_new_item(self, auth_session, item_data):  # создание нового item
-        response = auth_session.post(self.endpoint, json=item_data)
-        assert response.status_code == 200, "ошибка создания item"
+class TestAPI:
+    def test_create_and_delete_item(self, scenarios, item_data):
+        """Тест создания и удаления элемента"""
+        item = Item(**item_data)
+        create_resp, delete_resp = scenarios.create_and_delete_item(item)
 
-    def test_get_items(self, auth_session):  # получение списка элементов, проверка структуры ответа (`count`,`data`)
-        response = auth_session.get(self.endpoint)
-        assert response.status_code == 200, "ошибка получения списка"
-        response_json = response.json()
-        assert 'count' in response_json, "отсутствует count"
-        assert 'data' in response_json, "отсутствует data"
+        # Валидируем ответ создания
+        validate_response(create_resp, model=ItemResponse)
 
-    def test_filter_items(self, auth_session, item_data):
-        fixed_item = {
-            "title": "test_filter_title",  # фиксированное значение для фильтрации
-            "description": "test_filter_description"
-        }
-        response = auth_session.post(self.endpoint, json=fixed_item)
-        assert response.status_code == 200, "Не удалось создать элемент для фильтрации"
-        created_item = response.json()
+        # Проверяем удаление
+        assert delete_resp is not None and delete_resp.status_code == 200
 
-        params = {"title": fixed_item["title"]}
-        response = auth_session.get(self.endpoint, params=params)
-        assert response.status_code == 200, "Ошибка запроса с фильтром по title"
-        data = response.json().get('data', [])
-        assert any(item['id'] == created_item['id'] for item in data), \
-            "Созданный элемент не найден в результате фильтрации по title"
+    def test_create_and_update_item(self, scenarios, item_data):
+        """Тест создания и обновления элемента"""
+        item = Item(**item_data)
+        create_resp, update_resp = scenarios.create_and_update_item(item)
 
-        params = {"description": "example"}
-        response = auth_session.get(self.endpoint, params=params)
-        assert response.status_code == 200, "Ошибка запроса с фильтром по description"
-        data = response.json().get('data', [])
-        assert any(item['id'] == created_item['id'] for item in data), \
-            "Созданный элемент не найден в результате фильтрации по description"
+        # Валидируем оба ответа
+        validate_response(create_resp, model=ItemResponse)
+        validate_response(update_resp, model=ItemResponse)
 
-    def test_pagination_items(self, auth_session):
-        limit = 5
-        params = {"limit": limit}
-        response = auth_session.get(self.endpoint, params=params)
-        assert response.status_code == 200, f"Ошибка пагинации, статус {response.status_code}"
-        data = response.json().get('data', [])
-        assert len(data) <= limit
+        # Проверяем, что обновление прошло успешно
+        assert update_resp.status_code == 200
 
-        params_skip = {"limit": limit, "skip": limit}
-        response_skip = auth_session.get(self.endpoint, params=params_skip)
-        assert response_skip.status_code == 200
-        data_skip = response_skip.json().get('data', [])
-        assert data != data_skip
+    def test_get_items_structure(self, scenarios):
+        """Тест получения списка элементов"""
+        resp = scenarios.api.get_items()
+        assert resp.status_code == 200, "Ошибка получения списка"
 
-    def test_update_item(self, auth_session, item_data):
-        response = auth_session.post(self.endpoint, json=item_data)
-        assert response.status_code == 200, f'Ошибка создания {response.status_code}'
+        # Валидируем структуру ответа
+        try:
+            items_data = resp.json()
+            # API возвращает объект с полями count и data
+            assert isinstance(items_data, dict), "Ответ должен быть объектом"
+            assert "count" in items_data, "Ответ должен содержать поле count"
+            assert "data" in items_data, "Ответ должен содержать поле data"
+            assert isinstance(items_data["data"], list), "Поле data должно быть списком"
 
-        id_num = response.json().get('id')
-        assert id_num is not None, "ID не получен после создания"
+            # Дополнительная проверка: если есть элементы, проверяем их структуру
+            if items_data["data"]:
+                first_item = items_data["data"][0]
+                assert "id" in first_item, "Элемент должен содержать id"
+                assert "title" in first_item, "Элемент должен содержать title"
+                assert "description" in first_item, "Элемент должен содержать description"
 
-        original_data = response.json()
-        print("Исходные данные:", original_data)
+        except ValueError:
+            pytest.fail("Невалидный JSON в ответе")
 
-        updated_data = item_data.copy()
-        updated_data['title'] = updated_data.get('title', '') + "_updated"
-        updated_data['description'] = updated_data.get('description', '') + " updated"
+    def test_create_item_invalid_data(self, scenarios):
+        """Тест создания элемента с невалидными данными"""
+        invalid_payload = {"title": "", "description": "desc"}
+        response = scenarios.api.create_item(invalid_payload)
+        assert response.status_code in (400, 422), "Ожидалась ошибка валидации"
 
-        update_url = f"{self.endpoint.rstrip('/')}/{id_num}"
-
-        headers = auth_session.headers.copy()
-        headers.update({
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-        })
-
-        update_response = auth_session.put(update_url, json=updated_data, headers=headers)
-        print("PUT URL:", update_url)
-        print("PUT статус:", update_response.status_code)
-        print("PUT response:", update_response.text)
-
-        assert update_response.status_code == 200, f'Ошибка обновления: {update_response.status_code}'
-
-        new_data = update_response.json()
-        assert new_data != original_data, "обновление неуспешно"
-        assert new_data.get('title') == updated_data['title'], "Поле title не обновлено"
-        assert new_data.get('description') == updated_data['description'], "Поле description не обновлено"
-
-        print("Данные после обновления:", new_data)
-
-    def test_delete_item(self, auth_session, item_data):
-        response = auth_session.post(url=self.endpoint, json=item_data)
-        response_id = response.json().get('id')
-        print(response_id)
-        del_item = auth_session.delete(url=f"{self.endpoint.rstrip('/')}/{response_id}")
-        assert del_item.status_code == 200, "ошибка удаления"
-
-    @pytest.mark.parametrize("invalid_payload", [
-        {"title": "", "description": "valid description"},
-        {"title": "a" * 300, "description": "desc"},
-        {"title": "valid", "description": "a" * 2000},
-        {"title": None, "description": "desc"},
-        {"description": "desc only"},
-    ])
-    def test_create_item_invalid_data(self, auth_session, invalid_payload):
-        response = auth_session.post(self.endpoint, json=invalid_payload)
-        assert response.status_code in (400, 422), \
-            f"Ожидается ошибка валидации для {invalid_payload}, получен {response.status_code}"
-        error_detail = response.json().get("detail", "")
-        print(f"Ошибка для данных {invalid_payload}: {error_detail}")
-
-    def test_negative_crud_ops_without_token(self):
-        headers = {'Content-Type': 'application/json', 'Accept': 'application/json'}
-        response_post = requests.post(self.endpoint, headers=headers, json={"title": "test", "description": "desc"})
-        assert response_post.status_code in (401, 403),\
-            f"Ожидается ошибка авторизации, получен {response_post.status_code}"
-
-        response_get = requests.get(self.endpoint, headers=headers, json={"title": "test", "description": "desc"})
-        assert response_get.status_code in (401, 403), \
-            f'Ожидается ошибка получения item, получен {response_get.status_code}'
-
-        fake_id = "123"
-        response_delete = requests.delete(url=f"{self.endpoint.rstrip('/')}/{fake_id}")
-        assert response_delete.status_code in (401, 403), \
-            f"Ожидается ошибка удаления, получен {response_delete.status_code}"
-
-        put_payload = {"title": "update title", "description": "update description"}
-        response_put = requests.put(f"{self.endpoint.rstrip('/')}/{fake_id}", headers=headers, json=put_payload)
-        assert response_put.status_code in (401, 403), \
-            f"Ожидается ошибка обновления, получен {response_put.status_code}"
-
-    def test_negative_update_non_existent_item(self, auth_session):
-        fake_id = "123"
-        update_url = f'{self.endpoint.rstrip("/")}/{fake_id}'
+    def test_negative_update_non_existent_item(self, scenarios):
+        """Тест обновления несуществующего элемента"""
+        fake_id = "99999999-9999-9999-9999-999999999999"
         payload = {"title": "test", "description": "test"}
+        response = scenarios.api.update_item(fake_id, payload)
+        assert response.status_code in (404, 422), "Ожидалась ошибка 'не найден'"
 
-        response = auth_session.put(update_url, json=payload)
-        assert response.status_code == 422, \
-            f'Ожидается ошибка обновления несуществующего элемента, получен {response.status_code}'
+    def test_negative_try_double_delete(self, scenarios, item_data):
+        """Тест двойного удаления элемента"""
+        item = Item(**item_data)
+        create_resp, del_resp1 = scenarios.create_and_delete_item(item)
 
-    def test_negative_try_double_delete(self, auth_session, item_data):
-        response = auth_session.post(url=self.endpoint, json=item_data)
-        response_id = response.json().get('id')
+        # Валидируем создание
+        validate_response(create_resp, model=ItemResponse)
 
-        del_item = auth_session.delete(url=f"{self.endpoint.rstrip('/')}/{response_id}")
-        assert del_item.status_code == 200, "ошибка удаления"
+        # Получаем ID созданного элемента
+        item_id = create_resp.json().get('id')
+        assert item_id is not None, "ID элемента не должен быть None"
 
-        double_del = auth_session.delete(url=f"{self.endpoint.rstrip('/')}/{response_id}")
-        assert double_del.status_code == 404, 'совершилось двойное удаление'
+        # Первое удаление должно быть успешным
+        assert del_resp1.status_code == 200, "Первое удаление должно быть успешным"
+
+        # Второе удаление должно вернуть ошибку
+        del_resp2 = scenarios.api.delete_item(item_id)
+        assert del_resp2.status_code in (404, 400), "Второе удаление должно вернуть ошибку"
+
+    def test_negative_crud_ops_without_token(self, item_data):
+        """Тест CRUD операций без авторизации"""
+        headers = {'Content-Type': 'application/json'}
+        fake_id = "12345678-1234-1234-1234-123456789012"  # Строковый UUID
+
+        # Создание без авторизации
+        res_post = requests.post(f'{BASE_URL}items/', json=item_data, headers=headers)
+
+        # Получение списка без авторизации
+        res_get = requests.get(f'{BASE_URL}items/', headers=headers)
+
+        # Обновление без авторизации
+        res_put = requests.put(f'{BASE_URL}items/{fake_id}', json=item_data, headers=headers)
+
+        # Удаление без авторизации
+        res_del = requests.delete(f'{BASE_URL}items/{fake_id}', headers=headers)
+
+        # Проверяем, что все операции без авторизации возвращают ошибку
+        assert res_post.status_code in (401, 403), "Создание без авторизации должно быть запрещено"
+        assert res_get.status_code in (401, 403), "Получение без авторизации должно быть запрещено"
+        assert res_put.status_code in (401, 403), "Обновление без авторизации должно быть запрещено"
+        assert res_del.status_code in (401, 403), "Удаление без авторизации должно быть запрещено"

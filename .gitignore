@@ -27,3 +27,6 @@ htmlcov/
 *.sublime-workspace
 *.sublime-project
 *.iml
+
+#креды
+.env
