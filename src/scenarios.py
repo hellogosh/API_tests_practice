@@ -1,5 +1,5 @@
 from src.basic_api_methods import BasicAPIClient
-from src.data_models import Item
+from models.data_models import Item
 
 
 class ItemScenarios: #методы, которые комбинируют базовые вызовы API для часто встречающихся сценариев
@@ -29,26 +29,3 @@ class ItemScenarios: #методы, которые комбинируют баз
             }
             upd_resp = self.api.update_item(item_id, upd_item, headers)
         return create_resp, upd_resp
-    #
-    # def create_item_invalid(self, invalid_data):
-    #     return self.api.create_item(invalid_data)
-    #
-    # def update_non_existent_item(self, fake_id, data):
-    #     return self.api.update_item(fake_id, data)
-    #
-    # def delete_non_existent_item(self, fake_id):
-    #     return self.api.delete_item(fake_id)
-    #
-    # def try_double_delete(self, data):
-    #     create_resp = self.api.create_item(data)
-    #     item_id = create_resp.json().get('id')
-    #     delete_resp1 = self.api.delete_item(item_id) if item_id else None
-    #     delete_resp2 = self.api.delete_item(item_id) if item_id else None
-    #     return delete_resp1, delete_resp2
-    #
-    # def unauthorized_operations(self, data, fake_id, headers=None):
-    #     res_post = self.api.create_item_no_auth(data, headers)
-    #     res_get = self.api.get_items_no_auth(headers=headers)
-    #     res_put = self.api.update_item_no_auth(fake_id, data, headers)
-    #     res_del = self.api.delete_item_no_auth(fake_id, headers)
-    #     return res_post, res_get, res_put, res_del

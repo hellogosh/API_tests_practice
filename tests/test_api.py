@@ -1,11 +1,10 @@
 import requests
 import pytest
-from config.constant import BASE_URL
-from src.basic_api_methods import BasicAPIClient
-from src.scenarios import ItemScenarios
-from src.data_models import Item, ItemResponse
+from src.constant import Config
+from models.data_models import Item, ItemResponse
 from src.utils import validate_response
 
+BASE_URL = Config.BASE_URL
 
 class TestAPI:
     def test_create_and_delete_item(self, scenarios, item_data):
@@ -55,11 +54,10 @@ class TestAPI:
         except ValueError:
             pytest.fail("Невалидный JSON в ответе")
 
-    def test_create_item_invalid_data(self, scenarios):
-        """Тест создания элемента с невалидными данными"""
-        invalid_payload = {"title": "", "description": "desc"}
-        response = scenarios.api.create_item(invalid_payload)
-        assert response.status_code in (400, 422), "Ожидалась ошибка валидации"
+    def test_create_item_invalid_data(self, scenarios, invalid_payload):
+        for invalid_data in invalid_payload:
+            response = scenarios.api.create_item(invalid_data)
+            assert response.status_code in (400, 422), "Ожидалась ошибка валидации"
 
     def test_negative_update_non_existent_item(self, scenarios):
         """Тест обновления несуществующего элемента"""
