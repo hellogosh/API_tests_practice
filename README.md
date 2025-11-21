@@ -1,64 +1,55 @@
 # API Tests Practice
 
-Проект содержит автоматические тесты для проверки CRUD-операций API ресурсов.
-
-**Тестируемое API:** https://dashboard.fast-api.senior-pomidorov.ru/
-
-## Что проверяет
-
-- ✅ **Создание** нового элемента
-- ✅ **Получение** списка элементов (структура, фильтрация, пагинация)
-- ✅ **Полное обновление** элемента по ID
-- ✅ **Удаление** элемента по ID
-- ✅ Обработка ошибок (несуществующие элементы, запросы без токена)
+Автоматизированные тесты API для CRUD операций с комплексной валидацией.
 
 ## Быстрый старт
 
-### Предварительные требования
-
-- Python 3.9 или новее
-- Git
-
-### Установка и запуск
-
+### 1. Клонирование и настройка
 ```bash
-# 1. Клонируйте репозиторий
 git clone https://github.com/hellogosh/API_tests_practice.git
-
-# 2. Перейдите в директорию проекта
 cd API_tests_practice
-
-# 3. Создайте виртуальное окружение
 python -m venv venv
-
-# 4. Активируйте виртуальное окружение
-# Для Linux/macOS:
-source venv/bin/activate
-# Для Windows:
-venv\Scripts\activate
-
-# 5. Установите зависимости
+source venv/bin/activate  # Linux/macOS
+# venv\Scripts\activate   # Windows
 pip install -r requirements.txt
 
-# 6. Настройте конфигурацию
-# Отредактируйте файл config/constant.py, указав:
-# - BASE_URL вашего API
-# - Другие параметры доступа
+2. Настройка окружения
+bash
+# Скопируйте и отредактируйте .env файл
+cp .env.example .env
+Отредактируйте файл .env:
 
-# 7. Запустите тесты
-pytest -s
-```
-## Структура проекта
+env
+API_USERNAME=your_test_username
+API_PASSWORD=your_test_password
 
-```
-API_tests_practice/
-├── tests/               # Тестовые модули
-├── config/
-│   └── constant.py     # Настройки и константы
-├── requirements.txt    # Зависимости
-└── README.md          # Этот файл
-```
+3. Запуск тестов
+bash
+pytest -v
 
-## Контакты
+Структура проекта
+text
+tests/              # Тестовые сценарии
+src/                # API клиенты и утилиты  
+models/             # Модели данных и фабрики
+config/             # Конфигурационные файлы
 
-По вопросам и предложениям обращайтесь: [@pantyukhovsky](https://t.me/pantyukhovsky)
+Покрытие тестами
+✅ CRUD операции (Создание, Чтение, Обновление, Удаление)
+
+✅ Валидация данных и обработка ошибок
+
+✅ Аутентификация и авторизация
+
+✅ Пагинация и фильтрация
+
+Расширенное использование
+bash
+# Запуск с детальным отчетом
+pytest -v --html=report.html
+
+# Запуск конкретного теста
+pytest tests/test_api.py::TestAPI::test_create_item
+
+Нужна помощь?
+Напишите: @pantyukhovsky
