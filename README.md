@@ -5,36 +5,64 @@
 ## Быстрый старт
 
 ### 1. Клонирование и настройка
+
+Клонируйте репозиторий:
 ```bash
 git clone https://github.com/hellogosh/API_tests_practice.git
-cd API_tests_practice
-python -m venv venv
-source venv/bin/activate  # Linux/macOS
-# venv\Scripts\activate   # Windows
-pip install -r requirements.txt
+Перейдите в директорию проекта:
 
-2. Настройка окружения
 bash
-# Скопируйте и отредактируйте .env файл
+cd API_tests_practice
+Создайте виртуальное окружение:
+
+bash
+python -m venv venv
+Активируйте виртуальное окружение:
+
+Для Linux/macOS:
+
+bash
+source venv/bin/activate
+Для Windows:
+
+bash
+venv\Scripts\activate
+Установите зависимости:
+
+bash
+pip install -r requirements.txt
+```
+
+### 2. Настройка окружения:
+
+Скопируйте файл окружения:
+```bash
+
+bash
 cp .env.example .env
-Отредактируйте файл .env:
+Отредактируйте файл .env и укажите ваши учетные данные:
 
 env
 API_USERNAME=your_test_username
 API_PASSWORD=your_test_password
+```
 
-3. Запуск тестов
+### 3. Запуск тестов
+Запустите все тесты:
+```bash
 bash
 pytest -v
+````
+### Структура проекта
+```
 
-Структура проекта
-text
 tests/              # Тестовые сценарии
 src/                # API клиенты и утилиты  
 models/             # Модели данных и фабрики
 config/             # Конфигурационные файлы
+```
+### Покрытие тестами
 
-Покрытие тестами
 ✅ CRUD операции (Создание, Чтение, Обновление, Удаление)
 
 ✅ Валидация данных и обработка ошибок
@@ -43,13 +71,5 @@ config/             # Конфигурационные файлы
 
 ✅ Пагинация и фильтрация
 
-Расширенное использование
-bash
-# Запуск с детальным отчетом
-pytest -v --html=report.html
-
-# Запуск конкретного теста
-pytest tests/test_api.py::TestAPI::test_create_item
-
-Нужна помощь?
+### Нужна помощь?
 Напишите: @pantyukhovsky
