@@ -9,27 +9,31 @@
 Клонируйте репозиторий:
 ```bash
 git clone https://github.com/hellogosh/API_tests_practice.git
+```
 Перейдите в директорию проекта:
-
-bash
+```bash
 cd API_tests_practice
+```
 Создайте виртуальное окружение:
 
-bash
+```bash
 python -m venv venv
+```
 Активируйте виртуальное окружение:
 
 Для Linux/macOS:
 
-bash
+```bash
 source venv/bin/activate
+```
 Для Windows:
 
-bash
+```bash
 venv\Scripts\activate
+```
 Установите зависимости:
 
-bash
+```bash
 pip install -r requirements.txt
 ```
 
@@ -37,22 +41,20 @@ pip install -r requirements.txt
 
 Скопируйте файл окружения:
 ```bash
-
-bash
 cp .env.example .env
+```
 Отредактируйте файл .env и укажите ваши учетные данные:
 
 env
 API_USERNAME=your_test_username
 API_PASSWORD=your_test_password
-```
+
 
 ### 3. Запуск тестов
 Запустите все тесты:
 ```bash
-bash
 pytest -v
-````
+```
 ### Структура проекта
 ```
 
