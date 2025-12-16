@@ -1,11 +1,11 @@
 import logging
 from typing import Dict, Any, Optional
-from requests import Response, Session
+import httpx
 
 class HTTPClient:
-    def __init__(self, base_url: str, session: Optional[Session] = None):
+    def __init__(self, base_url: str, client: Optional[httpx.Client] = None):
         self.base_url = base_url.rstrip('/')
-        self.session = session or Session()
+        self.client = client or httpx.Client()
         self._setup_logging()
 
     def _setup_logging(self):
@@ -24,11 +24,11 @@ class HTTPClient:
         if data:
             self.logger.debug(f"Body: {data}")
 
-    def _log_response(self, response: Response):
+    def _log_response(self, response: httpx.Response):
         """Логирование ответа"""
-        self.logger.info(f"← {response.status_code} {response.reason}")
+        self.logger.info(f"← {response.status_code} {response.reason_phrase}")  # ← ИЗМЕНИЛОСЬ
         if response.text:
-            self.logger.debug(f"Response: {response.text[:500]}...")  # Ограничиваем длину
+            self.logger.debug(f"Response: {response.text[:500]}...")
 
     def _build_url(self, endpoint: str) -> str:
         """Сборка полного URL"""
@@ -39,7 +39,7 @@ class HTTPClient:
                 headers: Dict[str, str] = None,
                 params: Dict[str, Any] = None,
                 json: Any = None,
-                data: Any = None) -> Response:
+                data: Any = None) -> httpx.Response:  # ← ИЗМЕНИЛОСЬ
         """
         Базовый метод для отправки HTTP запросов
         """
@@ -49,7 +49,7 @@ class HTTPClient:
         self._log_request(method, url, headers, json or data)
 
         # Отправляем запрос
-        response = self.session.request(
+        response = self.client.request(  # ← ИЗМЕНИЛОСЬ
             method=method.upper(),
             url=url,
             headers=headers,
@@ -63,30 +63,34 @@ class HTTPClient:
 
         return response
 
-    # Специфичные HTTP методы
+    # Специфичные HTTP методы (остаются почти такими же!)
     def get(self, endpoint: str, params: Dict[str, Any] = None,
-            headers: Dict[str, str] = None) -> Response:
+            headers: Dict[str, str] = None) -> httpx.Response:  # ← ИЗМЕНИЛОСЬ
         return self.request('GET', endpoint, headers=headers, params=params)
 
     def post(self, endpoint: str, json: Any = None, data: Any = None,
-             headers: Dict[str, str] = None) -> Response:
+             headers: Dict[str, str] = None) -> httpx.Response:  # ← ИЗМЕНИЛОСЬ
         return self.request('POST', endpoint, headers=headers, json=json, data=data)
 
     def put(self, endpoint: str, json: Any = None, data: Any = None,
-            headers: Dict[str, str] = None) -> Response:
+            headers: Dict[str, str] = None) -> httpx.Response:  # ← ИЗМЕНИЛОСЬ
         return self.request('PUT', endpoint, headers=headers, json=json, data=data)
 
     def patch(self, endpoint: str, json: Any = None, data: Any = None,
-              headers: Dict[str, str] = None) -> Response:
+              headers: Dict[str, str] = None) -> httpx.Response:  # ← ИЗМЕНИЛОСЬ
         return self.request('PATCH', endpoint, headers=headers, json=json, data=data)
 
-    def delete(self, endpoint: str, headers: Dict[str, str] = None) -> Response:
+    def delete(self, endpoint: str, headers: Dict[str, str] = None) -> httpx.Response:  # ← ИЗМЕНИЛОСЬ
         return self.request('DELETE', endpoint, headers=headers)
 
     def set_headers(self, headers: Dict[str, str]):
         """Установка общих заголовков для всех запросов"""
-        self.session.headers.update(headers)
+        self.client.headers.update(headers)  # ← ИЗМЕНИЛОСЬ
 
     def clear_headers(self):
         """Очистка заголовков сессии"""
-        self.session.headers.clear()
+        self.client.headers.clear()  # ← ИЗМЕНИЛОСЬ
+
+    def close(self):  # ← НОВЫЙ МЕТОД (опционально)
+        """Закрытие клиента"""
+        self.client.close()

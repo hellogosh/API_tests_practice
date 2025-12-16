@@ -1,6 +1,6 @@
 from typing import Tuple, Optional
-from api.items_client import ItemsApiClient
-from models.item_models import ItemModel, ItemResponseModel
+from src.items_client import ItemsApiClient
+from src.item_models import ItemModel, ItemResponseModel
 
 
 class ItemScenarios:

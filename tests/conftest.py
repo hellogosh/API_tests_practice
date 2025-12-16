@@ -1,30 +1,34 @@
 import sys
 import os
-
 # Добавляем корень проекта в Python path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 import pytest
-from config.constant import Config, AUTH_DATA, Headers
-from scenarios.items_scenarios import ItemScenarios
-from models.item_models import ItemModel, ItemResponseModel
-from http_client.requester import HTTPClient
-from api.items_client import ItemsApiClient
+from src.constant import APIConfig
+from src.items_scenarios import ItemScenarios
+from src.item_models import ItemModel, ItemResponseModel
+from src.requester import HTTPClient
+from src.items_client import ItemsApiClient
+
 
 @pytest.fixture(scope="session")
 def http_client():
     """Базовый HTTP клиент без авторизации"""
-    return HTTPClient(base_url=Config.BASE_URL)
+    return HTTPClient(base_url=APIConfig.BASE_URL)  # Используем APIConfig
 
 
 @pytest.fixture(scope="session")
 def auth_http_client(http_client):
     """Авторизованный HTTP клиент"""
+    # Получаем данные для авторизации через APIConfig
+    auth_data = APIConfig.get_auth_data()  # Получаем через метод
+    auth_headers = APIConfig.get_auth_headers()  # Получаем заголовки для авторизации
+
     # Авторизуемся
     response = http_client.post(
         'login/access-token',
-        data=AUTH_DATA,
-        headers={'Content-Type': 'application/x-www-form-urlencoded'}
+        data=auth_data,
+        headers=auth_headers  # Используем заголовки из конфига
     )
     print(f"DEBUG Auth response: {response.status_code} {response.text}")
 
@@ -36,11 +40,11 @@ def auth_http_client(http_client):
     if not access_token:
         pytest.fail("Токен не получен в ответе авторизации")
 
-    http_client.set_headers({
-        'Authorization': f"Bearer {token_data['access_token']}",
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-    })
+    # Устанавливаем заголовки для API запросов
+    api_headers = APIConfig.get_api_headers()  # Базовые заголовки для API
+    api_headers['Authorization'] = f"Bearer {token_data['access_token']}"
+
+    http_client.set_headers(api_headers)
 
     return http_client
 
@@ -73,7 +77,8 @@ def created_item(scenarios):
 @pytest.fixture
 def unauthorized_http_client():
     """HTTP клиент без авторизации"""
-    return HTTPClient(base_url=Config.BASE_URL)
+    return HTTPClient(base_url=APIConfig.BASE_URL)  # Используем APIConfig
+
 
 @pytest.fixture
 def unauthorized_api(unauthorized_http_client):

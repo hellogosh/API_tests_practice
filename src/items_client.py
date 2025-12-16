@@ -1,6 +1,6 @@
 from typing import Dict, Any, Union
-from http_client.requester import HTTPClient
-from models.item_models import ItemModel, ItemResponseModel
+from src.requester import HTTPClient
+from src.item_models import ItemModel, ItemResponseModel
 from requests import Response
 
 class ItemsApiClient:
